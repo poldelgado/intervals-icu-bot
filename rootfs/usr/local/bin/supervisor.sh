@@ -1,0 +1,156 @@
+#!/usr/bin/env bash
+# Mantiene viva la sesión de Claude Code (con el canal de Telegram) dentro de tmux.
+set -uo pipefail
+# shellcheck source=lib.sh
+source /usr/local/bin/lib.sh
+
+WORKDIR="${WORKDIR:-/workspace}"
+MODEL_CHANGE_GRACE=20
+SESSION_LOG=/tmp/claude-session.log
+CHANNEL="plugin:telegram@claude-plugins-official"
+PLUGIN="telegram@claude-plugins-official"
+
+stopping=0
+started_day=""
+started_epoch=0
+fails=0
+waiting_logged=0
+running_model=""
+model_change_since=0
+notify_model=""
+
+session_alive() { tmux has-session -t "${SESSION_NAME}" 2>/dev/null; }
+
+stop_session() {
+  session_alive || return 0
+  log "Cerrando la sesión de Claude Code..."
+  tmux kill-session -t "${SESSION_NAME}" 2>/dev/null || true
+  for _ in $(seq 1 15); do
+    pgrep -x claude >/dev/null || return 0
+    sleep 1
+  done
+  pkill -KILL -x claude 2>/dev/null || true
+}
+
+on_term() {
+  stopping=1
+  log "Señal de parada recibida."
+  stop_session
+  exit 0
+}
+trap on_term TERM INT
+
+nap() { sleep "$1" & wait $! || true; }
+
+ensure_plugin() {
+  if ! claude plugin install "${PLUGIN}" --scope user >/tmp/plugin-install.log 2>&1; then
+    # Primer arranque: falta el marketplace.
+    claude plugin marketplace add anthropics/claude-plugins-official >>/tmp/plugin-install.log 2>&1 || true
+    claude plugin install "${PLUGIN}" --scope user >>/tmp/plugin-install.log 2>&1 || return 1
+  fi
+  # Preinstala las dependencias del plugin: si lo hace el propio plugin al arrancar,
+  # la primera vez tarda más que el timeout de conexión de MCP y el canal queda caído.
+  local dir
+  dir="$(find "${CLAUDE_CONFIG_DIR}/plugins/cache/claude-plugins-official/telegram" \
+           -mindepth 1 -maxdepth 1 -type d 2>/dev/null | sort -V | tail -n 1)"
+  [ -n "${dir}" ] || return 1
+  (cd "${dir}" && bun install --no-summary) >>/tmp/plugin-install.log 2>&1
+}
+
+start_session() {
+  # Perfil de memoria actualizado en cada (re)inicio, incluido el diario.
+  /usr/local/bin/render-memoria.sh || log "No pude inyectar la memoria; sigo sin ella." >&2
+  : > "${SESSION_LOG}"
+  running_model="$(effective_model)"
+  tmux new-session -d -s "${SESSION_NAME}" -x 200 -y 50 -c "${WORKDIR}" \
+    "exec claude --channels ${CHANNEL} --permission-mode dontAsk --model ${running_model}"
+  tmux pipe-pane -t "${SESSION_NAME}" -o "cat >> ${SESSION_LOG}"
+  started_day="$(date +%F)"
+  started_epoch="$(date +%s)"
+  log "Sesión '${SESSION_NAME}' iniciada (modelo: ${running_model})."
+  if [ -n "${notify_model}" ]; then
+    telegram_notify "✅ Listo, ahora uso ${running_model}. Arranqué una conversación nueva (lo que tengo en memoria se mantiene)." \
+      || log "No pude confirmar el cambio de modelo por Telegram." >&2
+    notify_model=""
+  fi
+}
+
+after_exit() {
+  local lived=$(( $(date +%s) - started_epoch ))
+  log "La sesión terminó tras ${lived}s. Últimas líneas:"
+  sed -e 's/\x1b\[[0-9;?]*[a-zA-Z]//g' "${SESSION_LOG}" 2>/dev/null | grep -v '^\s*$' | tail -n 8 | sed 's/^/    | /'
+  if [ "${lived}" -lt 30 ]; then
+    fails=$((fails + 1))
+    local delay=$(( 5 * (2 ** (fails > 6 ? 6 : fails)) ))
+    [ "${delay}" -gt 300 ] && delay=300
+    log "Cayó rápido (${fails} seguidas); reintento en ${delay}s."
+    nap "${delay}"
+  else
+    fails=0
+  fi
+}
+
+# Modelo elegido desde el chat (MCP control) o, si no hay, CLAUDE_MODEL del .env.
+effective_model() {
+  control-mcp efectivo 2>/dev/null || echo "${CLAUDE_MODEL}"
+}
+
+# Si cambió el modelo elegido, espera MODEL_CHANGE_GRACE s (para que el bot termine de
+# responder) y reinicia la sesión; start_session confirma por Telegram.
+check_model_change() {
+  session_alive || return 0
+  local wanted
+  wanted="$(effective_model)"
+  if [ "${wanted}" = "${running_model}" ]; then
+    model_change_since=0
+    return 0
+  fi
+  local now
+  now="$(date +%s)"
+  if [ "${model_change_since}" -eq 0 ]; then
+    model_change_since="${now}"
+    log "Cambio de modelo pedido: ${running_model} -> ${wanted} (reinicio en ${MODEL_CHANGE_GRACE}s)."
+  elif [ $((now - model_change_since)) -ge "${MODEL_CHANGE_GRACE}" ]; then
+    model_change_since=0
+    notify_model=1
+    stop_session
+  fi
+}
+
+daily_tasks() {
+  local now today
+  now="$(date +%H:%M)"; today="$(date +%F)"
+  if session_alive && [ "${started_day}" != "${today}" ] && [[ "${now}" > "${DAILY_RESTART_TIME}" || "${now}" == "${DAILY_RESTART_TIME}" ]]; then
+    log "Reinicio diario (${DAILY_RESTART_TIME}) para limpiar el contexto."
+    stop_session
+  fi
+}
+
+log "Supervisor iniciado (reinicio diario ${DAILY_RESTART_TIME}, TZ=${TZ:-?})."
+
+while [ "${stopping}" -eq 0 ]; do
+  if ! has_claude_credentials; then
+    if [ "${waiting_logged}" -eq 0 ]; then
+      log "Sin credenciales de Claude Code. Corré scripts/setup.sh (o 'docker compose exec -it canal claude' y /login)."
+      waiting_logged=1
+    fi
+    nap 10
+    continue
+  fi
+  waiting_logged=0
+
+  if ! session_alive; then
+    [ "${started_epoch}" -gt 0 ] && after_exit
+    if ! ensure_plugin; then
+      log "No pude instalar el plugin de Telegram (¿sin red?):" >&2
+      tail -n 5 /tmp/plugin-install.log | sed 's/^/    | /' >&2
+      nap 30
+      continue
+    fi
+    start_session
+  fi
+
+  daily_tasks
+  check_model_change
+  nap 5
+done

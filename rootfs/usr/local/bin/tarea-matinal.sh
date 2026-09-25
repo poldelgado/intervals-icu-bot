@@ -1,0 +1,19 @@
+#!/usr/bin/env bash
+# Resumen matinal: sueño, FC en reposo, forma, actividades de ayer, plan de hoy y recomendación.
+set -uo pipefail
+# shellcheck source=tareas-lib.sh
+source /usr/local/bin/tareas-lib.sh
+
+hoy="$(date +%F)"
+ayer="$(date -d yesterday +%F)"
+
+tarea_claude matinal "Hoy es $(fecha_larga "${hoy}"). Armá el RESUMEN MATINAL (máximo 900 caracteres).
+Arrancá con '☀️ Buen día' y el día de la semana. Incluí, en este orden y en pocas líneas:
+1. Sueño de anoche: está en el registro de wellness de HOY (${hoy}). Duración, puntaje y calidad.
+2. FC en reposo de hoy comparada con el promedio de los 7 días anteriores (y HRV si hay).
+3. Forma de hoy: CTL, ATL y TSB en una línea, con una interpretación corta.
+4. Actividades de ayer (${ayer}): tipo, duración, distancia, carga; potencia media si es bici.
+   Si no hubo, decí 'ayer: descanso'.
+5. Entrenamiento planificado para hoy en el calendario de Intervals.icu, si hay (con objetivos).
+6. Recomendación para hoy en 1 o 2 líneas (descanso, suave, moderado o intenso), justificada con
+   los datos y con lo que haya en la memoria (lesiones, molestias recientes, objetivos)."

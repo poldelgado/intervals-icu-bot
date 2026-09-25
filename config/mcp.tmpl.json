@@ -1,0 +1,22 @@
+{
+  "mcpServers": {
+    "intervals": {
+      "command": "intervals-icu-mcp",
+      "args": [],
+      "env": {
+        "INTERVALS_ICU_API_KEY": "${INTERVALS_ICU_API_KEY}",
+        "INTERVALS_ICU_ATHLETE_ID": "${INTERVALS_ICU_ATHLETE_ID}",
+        "INTERVALS_ICU_DELETE_MODE": "none"
+      }
+    },
+    "control": {
+      "command": "control-mcp",
+      "args": [],
+      "env": {
+        "ESTADO_DIR": "${ESTADO_DIR}",
+        "CLAUDE_MODEL": "${CLAUDE_MODEL}",
+        "REPORTES_DIR": "${REPORTES_DIR:-/data/tareas/reportes}"
+      }
+    }
+  }
+}

@@ -1,0 +1,13 @@
+.git
+.env
+.env.*
+!.env.example
+docs
+README.md
+scripts
+.github
+memoria-mcp/.venv
+memoria-mcp/tests
+**/__pycache__
+**/.pytest_cache
+**/.ruff_cache

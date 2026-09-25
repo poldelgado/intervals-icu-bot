@@ -1,0 +1,83 @@
+name: asistente-entrenamiento
+
+# Configuración común de ambos servicios (misma imagen, mismo endurecimiento).
+x-base: &base
+  image: ${IMAGE:-asistente-entrenamiento:local}
+  build:
+    context: .
+    args:
+      CLAUDE_CODE_VERSION: ${CLAUDE_CODE_VERSION:-2.1.282}
+      INTERVALS_MCP_VERSION: ${INTERVALS_MCP_VERSION:-5.2.0}
+      BUN_VERSION: ${BUN_VERSION:-1.4.2}
+      SUPERCRONIC_VERSION: ${SUPERCRONIC_VERSION:-0.2.49}
+  restart: unless-stopped
+  env_file: .env
+  read_only: true
+  security_opt:
+    - no-new-privileges:true
+  cap_drop:
+    - ALL
+  pids_limit: 256
+  logging:
+    driver: json-file
+    options:
+      max-size: "10m"
+      max-file: "3"
+  # Sin `ports`: todo el tráfico es saliente (Telegram por long polling, APIs por HTTPS).
+
+services:
+  # Sesión persistente de Claude Code con el canal de Telegram.
+  canal:
+    <<: *base
+    container_name: asistente-canal
+    stop_grace_period: 30s
+    environment:
+      TZ: ${TZ:-America/Argentina/Tucuman}
+      # Que la suscripción no la pise una API key del entorno del host.
+      ANTHROPIC_API_KEY: ""
+    volumes:
+      - claude:/data/claude        # credenciales, plugins y config de Claude Code
+      - telegram:/data/telegram    # allowlist (access.json) del canal
+      - memoria:/data/memoria      # memoria del asistente (perfil.md, diario.md)
+      - estado:/data/estado        # preferencias elegidas desde el chat (modelo)
+      - tareas:/data/tareas:ro     # reportes automáticos (para responder sobre ellos)
+    tmpfs:
+      - /tmp:size=256m,mode=1777
+      - /home/asistente:size=256m,uid=1000,gid=1000,mode=0700
+      - /workspace:size=16m,uid=1000,gid=1000,mode=0700
+    mem_limit: 1g
+    cpus: 1.5
+
+  # Tareas programadas (supercronic + `claude -p` de solo lectura). Sin socket de Docker.
+  tareas:
+    <<: *base
+    container_name: asistente-tareas
+    entrypoint: ["/usr/bin/tini", "-g", "--", "/usr/local/bin/tareas-entrypoint.sh"]
+    stop_grace_period: 10s
+    environment:
+      TZ: ${TZ:-America/Argentina/Tucuman}
+      ANTHROPIC_API_KEY: ""
+      # Config de Claude Code descartable: sin plugins (no levanta Telegram) ni credenciales.
+      CLAUDE_CONFIG_DIR: /home/asistente/.claude
+    volumes:
+      - memoria:/data/memoria:ro   # la memoria es solo lectura para las tareas
+      - tareas:/data/tareas        # estado de las tareas y reportes enviados
+    tmpfs:
+      - /tmp:size=128m,mode=1777
+      - /home/asistente:size=128m,uid=1000,gid=1000,mode=0700
+      - /tareas:size=16m,uid=1000,gid=1000,mode=0700
+    healthcheck:
+      test: ["CMD", "pgrep", "-x", "supercronic"]
+      interval: 60s
+      timeout: 5s
+      start_period: 30s
+      retries: 3
+    mem_limit: 768m
+    cpus: 1.0
+
+volumes:
+  claude:
+  telegram:
+  memoria:
+  estado:
+  tareas:
