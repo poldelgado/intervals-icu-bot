@@ -1,4 +1,4 @@
-# asistente-entrenamiento
+# intervals-icu-bot
 
 Asistente personal de entrenamiento por Telegram. Corre Claude Code de forma persistente en un contenedor,
 lee tus datos de [Intervals.icu](https://intervals.icu) (que ya unifica Garmin Edge y Amazfit) y te contesta en
@@ -56,7 +56,7 @@ y te manda por Telegram:
 ## Instalación
 
 ```bash
-git clone <este-repo> asistente-entrenamiento && cd asistente-entrenamiento
+git clone git@github.com:poldelgado/intervals-icu-bot.git && cd intervals-icu-bot
 cp .env.example .env && chmod 600 .env     # completalo con los pasos manuales de abajo
 docker compose up -d --build
 scripts/setup.sh                           # guía interactiva de la primera configuración
