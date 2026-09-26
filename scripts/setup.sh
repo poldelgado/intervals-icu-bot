@@ -74,7 +74,7 @@ cat <<'MSG'
 3. Si el bot pide un permiso o queda trabado, mirá la sesión con scripts/attach.sh.
 
 Alternativa de emparejamiento manual (si preferís no sembrar el ID):
-   docker compose exec -it canal claude   -> /telegram:access pair <código>
-   luego                                  -> /telegram:access policy allowlist
+   scripts/attach.sh   -> escribí /telegram:access pair <código>
+   luego               -> /telegram:access policy allowlist   (salís con Ctrl+b, d)
 MSG
 say "Listo."

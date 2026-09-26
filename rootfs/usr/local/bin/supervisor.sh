@@ -18,6 +18,9 @@ waiting_logged=0
 running_model=""
 model_change_since=0
 notify_model=""
+poller_missing_since=0
+POLLER_GRACE=180     # s tras iniciar la sesión antes de exigir el poller
+POLLER_MISSING_MAX=60 # s sin poller antes de reiniciar la sesión
 
 session_alive() { tmux has-session -t "${SESSION_NAME}" 2>/dev/null; }
 
@@ -117,6 +120,28 @@ check_model_change() {
   fi
 }
 
+# Si el poller de Telegram desaparece (lo mató otro proceso, cayó por un error...), Claude
+# sigue vivo pero el bot queda sordo. Lo detectamos y reiniciamos la sesión.
+check_poller() {
+  if ! session_alive; then
+    poller_missing_since=0
+    return 0
+  fi
+  local now
+  now="$(date +%s)"
+  [ $((now - started_epoch)) -ge "${POLLER_GRACE}" ] || return 0
+  if pgrep -f '[b]un server.ts' >/dev/null; then
+    poller_missing_since=0
+  elif [ "${poller_missing_since}" -eq 0 ]; then
+    poller_missing_since="${now}"
+    log "AVISO: no veo el canal de Telegram (bun server.ts); si sigue así reinicio la sesión." >&2
+  elif [ $((now - poller_missing_since)) -ge "${POLLER_MISSING_MAX}" ]; then
+    log "El canal de Telegram no está corriendo hace más de ${POLLER_MISSING_MAX}s: reinicio la sesión." >&2
+    poller_missing_since=0
+    stop_session
+  fi
+}
+
 daily_tasks() {
   local now today
   now="$(date +%H:%M)"; today="$(date +%F)"
@@ -152,5 +177,6 @@ while [ "${stopping}" -eq 0 ]; do
 
   daily_tasks
   check_model_change
+  check_poller
   nap 5
 done

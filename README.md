@@ -88,8 +88,9 @@ termine en `bot`, copiá el token.
 **no hace falta emparejar** y el bot nunca queda abierto.
 
 *Alternativa manual (emparejamiento):* escribile al bot, te da un código de 6 caracteres; en
-`docker compose exec -it canal claude` corré `/telegram:access pair <código>` y después
-`/telegram:access policy allowlist`.
+la sesión del bot (`scripts/attach.sh`) escribí `/telegram:access pair <código>` y después
+`/telegram:access policy allowlist`. (No abras un `claude` aparte dentro del contenedor con el bot andando: ver
+[troubleshooting](docs/troubleshooting.md).)
 
 Después: `docker compose up -d` (o `scripts/setup.sh`) y escribile "hola" al bot.
 

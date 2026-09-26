@@ -10,6 +10,8 @@ Todavía no hiciste el login. `scripts/setup.sh` (paso 2) o poné `CLAUDE_CODE_O
 Si el token vence (dura 1 año) o cambia tu suscripción, regeneralo con `claude setup-token`.
 
 ## El bot no responde
+0. `docker compose exec canal pgrep -af '[b]un server.ts'` tiene que mostrar el poller de Telegram; si no muestra nada
+   el canal está caído (reiniciá con `docker compose restart canal`).
 1. `docker compose ps`: ¿está `healthy`? Si no, `scripts/logs.sh`.
 2. `scripts/attach.sh`: ¿Claude Code muestra `Channels (experimental)` en el arranque? Si dice que el canal no
    está permitido o que los channels están deshabilitados, revisá tu plan: en Pro/Max no requiere nada;
@@ -43,16 +45,22 @@ Mirá qué tiene guardado: preguntale "¿qué recordás de mí?" o corré `scrip
 nunca escribiste (por ejemplo texto de una actividad), es un intento de inyección: borralo y avisá.
 
 ## No recuerda lo que le dije
-- `MEMORIA_ENABLED=true` en `.env` y `docker compose exec canal claude mcp list` muestra `memoria ✔ Connected`.
+- `MEMORIA_ENABLED=true` en `.env` y `docker compose exec tareas bash -c 'cd /tareas && claude mcp list'` muestra `memoria ✔ Connected`.
 - Cuando guarda, el bot tiene que decir "Anoté: …". Si no lo dijo, no guardó.
 - El perfil tiene tope de 4 KB y el diario de 256 KB: si están llenos, el bot te va a pedir consolidar.
 - El perfil se carga al iniciar la sesión; lo guardado hoy igual está disponible vía búsqueda.
+
+## ⚠️ No corras `claude mcp list` (ni `claude` a mano) dentro del contenedor `canal` con el bot andando
+Lanza una copia temporal del plugin de Telegram, y el plugin le manda SIGTERM a cualquier otro poller que encuentre:
+mata el de la sesión real y el bot queda sordo (Claude vivo, sin canal). El supervisor lo detecta y reinicia la sesión
+a los ~4 minutos, pero evitalo. Para chequear conexiones usá el contenedor `tareas` (no tiene el plugin de Telegram):
+`docker compose exec tareas bash -c 'cd /tareas && claude mcp list'`, o `/mcp` desde `scripts/attach.sh`.
 
 ## `MCP server "intervals" connection timed out after 30000ms`
 Claude Code espera 30 s a que arranque cada servidor MCP y, en equipos con disco lento (algunos LXC o VM), el
 primer arranque en frío de Python lo supera: el bot responde pero sin datos de Intervals.icu. Se resuelve con
 `MCP_TIMEOUT=120000` (ya es el default del compose) y `docker compose restart canal`. Verificalo con
-`docker compose exec canal bash -c 'cd /workspace && claude mcp list'`.
+`docker compose exec tareas bash -c 'cd /tareas && claude mcp list'`.
 
 ## `range of CPUs is from 0.01 to 1.00` al crear los contenedores
 El host tiene menos núcleos que el tope configurado. Bajá `CANAL_CPUS` / `TAREAS_CPUS` en el `.env` (el máximo
