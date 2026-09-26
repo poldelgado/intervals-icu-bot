@@ -48,6 +48,10 @@ nunca escribiste (por ejemplo texto de una actividad), es un intento de inyecci�
 - El perfil tiene tope de 4 KB y el diario de 256 KB: si están llenos, el bot te va a pedir consolidar.
 - El perfil se carga al iniciar la sesión; lo guardado hoy igual está disponible vía búsqueda.
 
+## `range of CPUs is from 0.01 to 1.00` al crear los contenedores
+El host tiene menos núcleos que el tope configurado. Bajá `CANAL_CPUS` / `TAREAS_CPUS` en el `.env` (el máximo
+es la cantidad de núcleos del host, ver `nproc`) o dale más núcleos a la VM/LXC.
+
 ## No llegan los mensajes automáticos
 - `docker compose ps`: `asistente-tareas` tiene que estar `healthy`. `scripts/logs.sh tareas` muestra las tareas
   registradas al arrancar y cada ejecución.
