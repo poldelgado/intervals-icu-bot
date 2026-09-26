@@ -35,6 +35,9 @@ services:
       TZ: ${TZ:-America/Argentina/Tucuman}
       # Que la suscripción no la pise una API key del entorno del host.
       ANTHROPIC_API_KEY: ""
+      # Tiempo (ms) que Claude Code espera a que arranque cada servidor MCP. En hosts con disco
+      # lento, el primer arranque en frío de Python puede pasar los 30 s por defecto.
+      MCP_TIMEOUT: ${MCP_TIMEOUT:-120000}
     volumes:
       - claude:/data/claude        # credenciales, plugins y config de Claude Code
       - telegram:/data/telegram    # allowlist (access.json) del canal
@@ -57,6 +60,7 @@ services:
     environment:
       TZ: ${TZ:-America/Argentina/Tucuman}
       ANTHROPIC_API_KEY: ""
+      MCP_TIMEOUT: ${MCP_TIMEOUT:-120000}
       # Config de Claude Code descartable: sin plugins (no levanta Telegram) ni credenciales.
       CLAUDE_CONFIG_DIR: /home/asistente/.claude
     volumes:

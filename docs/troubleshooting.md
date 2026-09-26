@@ -48,6 +48,12 @@ nunca escribiste (por ejemplo texto de una actividad), es un intento de inyecci�
 - El perfil tiene tope de 4 KB y el diario de 256 KB: si están llenos, el bot te va a pedir consolidar.
 - El perfil se carga al iniciar la sesión; lo guardado hoy igual está disponible vía búsqueda.
 
+## `MCP server "intervals" connection timed out after 30000ms`
+Claude Code espera 30 s a que arranque cada servidor MCP y, en equipos con disco lento (algunos LXC o VM), el
+primer arranque en frío de Python lo supera: el bot responde pero sin datos de Intervals.icu. Se resuelve con
+`MCP_TIMEOUT=120000` (ya es el default del compose) y `docker compose restart canal`. Verificalo con
+`docker compose exec canal bash -c 'cd /workspace && claude mcp list'`.
+
 ## `range of CPUs is from 0.01 to 1.00` al crear los contenedores
 El host tiene menos núcleos que el tope configurado. Bajá `CANAL_CPUS` / `TAREAS_CPUS` en el `.env` (el máximo
 es la cantidad de núcleos del host, ver `nproc`) o dale más núcleos a la VM/LXC.
