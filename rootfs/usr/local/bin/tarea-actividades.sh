@@ -67,11 +67,14 @@ tarea_claude actividad "Hoy es $(fecha_larga). Se acaban de sincronizar estas ac
 ${detalle}
 
 Armá un ANÁLISIS POST-ACTIVIDAD (máximo 1000 caracteres). Si dos actividades son la misma sesión
-(Edge y reloj al mismo tiempo), tratalas como una sola y usá la del Edge para los datos de bici.
+(Edge y reloj al mismo tiempo), tratalas como una sola y usá la del Edge para GPS, velocidad y
+desnivel de la bici.
 Arrancá con un emoji según el deporte (🚴 bici, 🏃 correr, 🏋️ gimnasio, etc.) y el nombre. Incluí:
 1. Qué fue: duración, distancia, desnivel.
-2. Intensidad: potencia media y normalizada, IF y zonas si es bici con potencia; si no, FC y zonas.
-3. Comparación breve con sesiones parecidas de las últimas 4 a 6 semanas, si hay.
+2. Intensidad: FC media y máxima, tiempo en zonas de FC y carga por FC. No hay potenciómetro:
+   no menciones vatios, NP, IF ni FTP.
+3. Comparación breve con sesiones de recorrido y duración parecidos de las últimas 4 a 6 semanas:
+   velocidad media y FC media (más rápido con la misma FC = mejor eficiencia).
 4. Impacto: carga de la sesión y cómo queda la forma (TSB) hoy.
 5. Una sugerencia de recuperación para lo que resta del día o mañana, teniendo en cuenta la memoria
    (lesiones, molestias, objetivos)."

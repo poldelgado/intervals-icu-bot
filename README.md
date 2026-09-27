@@ -135,7 +135,7 @@ Problemas comunes: [docs/troubleshooting.md](docs/troubleshooting.md).
 
 El asistente recuerda lo que le contás por Telegram entre sesiones (la sesión se reinicia a diario).
 
-- **Perfil** (`perfil.md`): objetivos, salud y lesiones, preferencias, equipo y referencias (FTP, FC máx.). Se
+- **Perfil** (`perfil.md`): objetivos, salud y lesiones, preferencias, equipo y referencias (FC máx., peso). Se
   carga completo (máx. 4 KB) al iniciar cada sesión.
 - **Diario** (`diario.md`): hechos y decisiones con fecha. El asistente lo consulta cuando hace falta (máx. 256 KB).
 - Todo en Markdown legible en el volumen `memoria`. Lo ves con `scripts/memoria.sh ver` o preguntando
