@@ -22,7 +22,7 @@ MODELOS = {
 }
 
 Eleccion = Literal["haiku", "sonnet", "opus", "default"]
-TipoReporte = Literal["matinal", "actividad", "alerta", "semanal"]
+TipoReporte = Literal["matinal", "actividad", "alerta", "semanal", "datos"]
 
 MAX_REPORTES = 5
 MAX_CHARS_REPORTE = 3000
@@ -133,7 +133,8 @@ def reportes_recientes(tipo: TipoReporte | None = None, cantidad: int = 3) -> st
     """Lee los últimos mensajes automáticos que recibió la persona (máx. 5).
 
     tipo: matinal (resumen de la mañana), actividad (análisis post-actividad),
-    alerta (alertas de recuperación) o semanal. Sin tipo: los más recientes de cualquiera.
+    alerta (alertas de recuperación), semanal o datos (avisos de datos faltantes o conexiones
+    caídas). Sin tipo: los más recientes de cualquiera.
     """
     reps = leer_reportes(tipo, cantidad)
     if not reps:

@@ -98,3 +98,20 @@ fecha_larga() {  # fecha_larga [YYYY-MM-DD] → "jueves 2026-09-25"
   local d="${1:-$(date +%F)}"
   printf '%s %s' "${DIAS_ES[$(date -d "${d}" +%w)]}" "${d}"
 }
+
+# --- Errores de autenticación de Claude ----------------------------------------------
+# Mensajes típicos cuando el token de Claude venció o fue revocado. Los espacios son
+# opcionales porque el log de tmux a veces los pierde (la TUI mueve el cursor en vez de
+# escribir espacios).
+AUTH_ERROR_RE='failed ?to ?authenticate|oauth ?access ?token ?is ?invalid|invalid ?bearer ?token|login ?expired|please ?run ?/login|authentication_error'
+
+# shellcheck disable=SC2034  # lo usan los scripts que hacen source de lib.sh
+AUTH_ERROR_MSG="🔑 El token de Claude venció o fue revocado, así que el asistente no puede usar el modelo.
+Para arreglarlo:
+1. En una computadora con navegador corré: claude setup-token
+2. Reemplazá CLAUDE_CODE_OAUTH_TOKEN en el .env del servidor.
+3. Aplicalo con: docker compose up -d --force-recreate"
+
+is_auth_error() {  # is_auth_error ARCHIVO...  → 0 si alguno contiene un error de autenticación
+  grep -qiE "${AUTH_ERROR_RE}" "$@" 2>/dev/null
+}

@@ -47,9 +47,13 @@ def test_reportes(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
     (d / "2026-09-25T0700-matinal.txt").write_text("Dormiste 7 h")
     (d / "2026-09-25T1830-actividad.txt").write_text("Salida de 80 km")
     (d / "basura.txt").write_text("x")
-    out = control.reportes_recientes()
-    assert out.index("Salida de 80 km") < out.index("Dormiste 7 h") < out.index("Dormiste 6 h")
+    (d / "2026-09-25T0830-datos.txt").write_text("Abrí Zepp")
+    out = control.reportes_recientes(cantidad=5)
+    assert out.index("Salida de 80 km") < out.index("Abrí Zepp") < out.index("Dormiste 7 h")
+    assert out.index("Dormiste 7 h") < out.index("Dormiste 6 h")
+    assert "Dormiste 6 h" not in control.reportes_recientes()  # por defecto, los 3 últimos
     assert "basura" not in out and "x\n" not in out
+    assert "Abrí Zepp" in control.reportes_recientes("datos")
     solo = control.reportes_recientes("matinal", cantidad=1)
     assert "Dormiste 7 h" in solo and "Dormiste 6 h" not in solo
     (d / "2026-09-26T0700-semanal.txt").write_text("y" * 10_000)

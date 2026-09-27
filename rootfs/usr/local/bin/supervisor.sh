@@ -21,6 +21,10 @@ notify_model=""
 poller_missing_since=0
 POLLER_GRACE=180     # s tras iniciar la sesión antes de exigir el poller
 POLLER_MISSING_MAX=60 # s sin poller antes de reiniciar la sesión
+HEARTBEAT_EVERY="${HEARTBEAT_EVERY:-300}"   # s entre pings a HEALTHCHECK_URL
+last_heartbeat=0
+last_auth_notice=0
+AUTH_NOTICE_EVERY=43200  # s: como mucho un aviso de token vencido cada 12 h
 
 session_alive() { tmux has-session -t "${SESSION_NAME}" 2>/dev/null; }
 
@@ -142,6 +146,37 @@ check_poller() {
   fi
 }
 
+# Alarma externa ("dead man's switch"): si está configurada HEALTHCHECK_URL (p. ej.
+# healthchecks.io), la pinguea solo cuando el bot está sano de verdad (sesión + poller de
+# Telegram). Si el LXC se apaga o el bot queda sordo, los pings se cortan y el servicio
+# externo avisa: es la única forma de enterarse, porque un bot caído no puede avisar.
+heartbeat() {
+  [ -n "${HEALTHCHECK_URL:-}" ] || return 0
+  local now
+  now="$(date +%s)"
+  [ $((now - last_heartbeat)) -ge "${HEARTBEAT_EVERY}" ] || return 0
+  session_alive && pgrep -x claude >/dev/null && pgrep -f '[b]un server.ts' >/dev/null || return 0
+  # La URL contiene el identificador del check: va por stdin, no por argv.
+  if printf 'url = "%s"\n' "${HEALTHCHECK_URL}" | curl -fsS -m 10 --retry 2 -o /dev/null -K -; then
+    last_heartbeat="${now}"
+  else
+    log "AVISO: no pude pinguear HEALTHCHECK_URL (se reintenta en el próximo ciclo)." >&2
+    last_heartbeat=$((now - HEARTBEAT_EVERY + 60))
+  fi
+}
+
+# Si la sesión muestra un error de autenticación (token de Claude vencido o revocado),
+# el bot no puede responder: avisa por Telegram con los pasos para arreglarlo.
+check_auth() {
+  local now
+  now="$(date +%s)"
+  [ $((now - last_auth_notice)) -ge "${AUTH_NOTICE_EVERY}" ] || return 0
+  is_auth_error "${SESSION_LOG}" || return 0
+  last_auth_notice="${now}"
+  log "ERROR: la sesión muestra un error de autenticación de Claude (token vencido o revocado)." >&2
+  telegram_notify "${AUTH_ERROR_MSG}" || log "No pude avisar del token vencido por Telegram." >&2
+}
+
 daily_tasks() {
   local now today
   now="$(date +%H:%M)"; today="$(date +%F)"
@@ -178,5 +213,7 @@ while [ "${stopping}" -eq 0 ]; do
   daily_tasks
   check_model_change
   check_poller
+  heartbeat
+  check_auth
   nap 5
 done

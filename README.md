@@ -34,6 +34,7 @@ y te manda por Telegram:
 | Análisis post-actividad | ~10–25 min después de que se sincroniza una actividad | solo si hay actividad nueva | duración, intensidad, comparación con sesiones parecidas, impacto en la forma, recuperación |
 | Alertas de recuperación | todos los días 10:00, solo si algo se dispara | no | FC en reposo alta, HRV baja, TSB muy negativo |
 | Resumen semanal | domingos 20:00 | sí | volumen, sesión destacada, evolución de la forma, sueño, comparación y sugerencias |
+| Guardián de datos | todos los días 08:30 | no | te avisa si no llegaron el sueño ni la FC en reposo de hoy ("abrí Zepp") o si se desconectó Zepp o Garmin de Intervals.icu |
 | Chequeo de la API | todos los días 08:00 | no | te avisa si Intervals.icu rechaza las credenciales |
 
 - Las tareas con Claude corren `claude -p` en un directorio de trabajo **separado**, con los mismos permisos de solo
@@ -44,6 +45,23 @@ y te manda por Telegram:
 - Los reportes enviados se guardan (los últimos 60) para que el bot pueda responder si le preguntás por uno
   ("¿por qué me dijiste que descanse?").
 - Todo se activa/desactiva y se programa desde el `.env` (ver la sección *Tareas programadas* de `.env.example`).
+- Intervals.icu no se puede forzar a sincronizar por API: Garmin y Zepp le *empujan* los datos. Si faltan, lo que
+  funciona es abrir la app Zepp o Garmin Connect en el celular para que el dispositivo sincronice.
+- Si el token de Claude vence o es revocado, el bot (y las tareas) te avisan por Telegram con los pasos para renovarlo.
+
+## Alarma externa (recomendada)
+
+Si el servidor se apaga o el bot queda "sordo", no puede avisarte. Para eso está la alarma externa:
+
+1. Creá una cuenta gratis en [healthchecks.io](https://healthchecks.io) y un check nuevo con **Period: 10 minutes** y
+   **Grace: 10 minutes**. Configurá cómo querés que te avise (email, o su integración de Telegram).
+2. Copiá la *Ping URL* (`https://hc-ping.com/<uuid>`) en `HEALTHCHECK_URL` del `.env` y aplicá con
+   `docker compose up -d`.
+3. El bot la pinguea cada 5 minutos **solo** si la sesión de Claude y el canal de Telegram están vivos. Si se cortan
+   los pings (LXC apagado, sin internet, bot sordo), healthchecks.io te avisa.
+
+El servicio solo recibe el ping (sin datos tuyos). Tratá la URL como un secreto: quien la tenga puede marcar el check como
+vivo.
 
 ## Requisitos previos
 

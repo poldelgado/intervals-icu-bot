@@ -14,10 +14,15 @@ validate_common
 : "${ALERT_RHR_DELTA:=5}"          "${ALERT_HRV_DROP_PCT:=20}" "${ALERT_TSB_MIN:=-30}"
 : "${WEEKLY_ENABLED:=true}"        "${WEEKLY_DAY:=0}"          "${WEEKLY_TIME:=20:00}"
 : "${MONITOR_ENABLED:=true}"       "${CHECK_TIME:=08:00}"
-for v in MORNING_ENABLED POST_ACTIVITY_ENABLED ALERTS_ENABLED WEEKLY_ENABLED MONITOR_ENABLED; do
+: "${DATA_CHECK_ENABLED:=true}"    "${DATA_CHECK_TIME:=08:30}"
+for v in MORNING_ENABLED POST_ACTIVITY_ENABLED ALERTS_ENABLED WEEKLY_ENABLED MONITOR_ENABLED \
+         DATA_CHECK_ENABLED; do
   validate_bool "$v"
 done
-for v in MORNING_TIME ALERTS_TIME WEEKLY_TIME CHECK_TIME; do validate_time "$v"; done
+for v in MORNING_TIME ALERTS_TIME WEEKLY_TIME CHECK_TIME DATA_CHECK_TIME; do validate_time "$v"; done
+[[ "${DATA_CONNECTIONS:-zepp,garmin_training}" =~ ^[a-z_,\ ]+$ ]] \
+  || die "DATA_CONNECTIONS inválido (ej. zepp,garmin_training): ${DATA_CONNECTIONS}"
+validate_int TAREA_TIMEOUT 60 1800
 validate_int POST_ACTIVITY_EVERY_MIN 5 60
 validate_int POST_ACTIVITY_DELAY_MIN 0 120
 validate_int POST_ACTIVITY_MAX_AGE_H 1 168
@@ -70,6 +75,7 @@ crontab=/tmp/crontab
   [ "${ALERTS_ENABLED}" = "true" ] && echo "$(cron_at "${ALERTS_TIME}") * * * /usr/local/bin/tarea-alertas.sh"
   [ "${WEEKLY_ENABLED}" = "true" ] && echo "$(cron_at "${WEEKLY_TIME}") * * ${WEEKLY_DAY} /usr/local/bin/tarea-semanal.sh"
   [ "${MONITOR_ENABLED}" = "true" ] && echo "$(cron_at "${CHECK_TIME}") * * * /usr/local/bin/check-api.sh"
+  [ "${DATA_CHECK_ENABLED}" = "true" ] && echo "$(cron_at "${DATA_CHECK_TIME}") * * * /usr/local/bin/tarea-datos.sh"
   true
 } > "${crontab}"
 

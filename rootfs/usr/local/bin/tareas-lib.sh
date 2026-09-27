@@ -73,7 +73,14 @@ tarea_claude() {
   if [ "${rc}" -ne 0 ] || [ ! -s "${out}" ]; then
     log "Tarea '${tipo}' falló (código ${rc}). Detalle:" >&2
     tail -n 5 "${err}" "${out}" 2>/dev/null | sed 's/^/    | /' >&2
-    [ "${TAREAS_DRY_RUN:-0}" = "1" ] || telegram_notify "⚠️ No pude generar el reporte automático '${tipo}' (código ${rc}). Detalle en: docker compose logs tareas" || true
+    local aviso="⚠️ No pude generar el reporte automático '${tipo}' (código ${rc}). Detalle en: docker compose logs tareas"
+    if is_auth_error "${err}" "${out}"; then
+      log "La falla es de autenticación: el token de Claude venció o fue revocado." >&2
+      aviso="${AUTH_ERROR_MSG}"
+    elif [ "${rc}" -eq 124 ]; then
+      aviso="⚠️ El reporte '${tipo}' tardó más de ${TAREA_TIMEOUT}s y lo corté. Si pasa seguido, subí TAREA_TIMEOUT en el .env."
+    fi
+    [ "${TAREAS_DRY_RUN:-0}" = "1" ] || telegram_notify "${aviso}" || true
     rm -f "${out}" "${err}"
     return 1
   fi

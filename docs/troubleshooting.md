@@ -66,6 +66,20 @@ primer arranque en frío de Python lo supera: el bot responde pero sin datos de 
 El host tiene menos núcleos que el tope configurado. Bajá `CANAL_CPUS` / `TAREAS_CPUS` en el `.env` (el máximo
 es la cantidad de núcleos del host, ver `nproc`) o dale más núcleos a la VM/LXC.
 
+## "Todavía no llegaron los datos del reloj de hoy"
+Lo manda el guardián de datos (08:30) cuando Intervals.icu no tiene sueño ni FC en reposo de hoy. Intervals.icu no se
+puede forzar a sincronizar: abrí la app Zepp en el celular con el reloj cerca y esperá unos minutos. Si el aviso dice
+que se **desconectó** Zepp o Garmin, reconectalo en Intervals.icu → Settings → Connections.
+
+## "El token de Claude venció o fue revocado"
+Generá uno nuevo con `claude setup-token` (en una máquina con navegador), reemplazá `CLAUDE_CODE_OAUTH_TOKEN` en el `.env`
+del servidor y aplicá con `docker compose up -d --force-recreate`.
+
+## Me llegó un aviso de healthchecks.io
+Los pings se cortaron: el servidor está apagado o sin internet, o el bot quedó sordo más de ~10 min. Revisá `docker compose ps`
+y `scripts/logs.sh canal`. El supervisor reinicia solo la sesión si falta el canal de Telegram; si el aviso se repite, mirá
+los logs.
+
 ## No llegan los mensajes automáticos
 - `docker compose ps`: `asistente-tareas` tiene que estar `healthy`. `scripts/logs.sh tareas` muestra las tareas
   registradas al arrancar y cada ejecución.
