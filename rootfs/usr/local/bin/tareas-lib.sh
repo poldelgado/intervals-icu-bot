@@ -10,8 +10,8 @@ TAREA_TIMEOUT="${TAREA_TIMEOUT:-300}"
 MAX_REPORTES_GUARDADOS=60
 
 # Tools que las tareas nunca pueden usar (además de la política gestionada):
-# escritura de memoria, control del modelo y el canal de Telegram.
-TAREAS_DENY="mcp__memoria__memoria_guardar,mcp__memoria__memoria_actualizar,mcp__memoria__memoria_borrar,mcp__control,mcp__plugin_telegram_telegram"
+# leer archivos, escritura de memoria, control del modelo y el canal de Telegram.
+TAREAS_DENY="Read,mcp__memoria__memoria_guardar,mcp__memoria__memoria_actualizar,mcp__memoria__memoria_borrar,mcp__control,mcp__plugin_telegram_telegram"
 
 # Modelo: TAREAS_MODEL o, si no, CLAUDE_MODEL del .env. A propósito NO sigue el /modelo del
 # chat: cambiar el modelo de la conversación no encarece los reportes automáticos.

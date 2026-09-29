@@ -80,6 +80,11 @@ Los pings se cortaron: el servidor está apagado o sin internet, o el bot quedó
 y `scripts/logs.sh canal`. El supervisor reinicia solo la sesión si falta el canal de Telegram; si el aviso se repite, mirá
 los logs.
 
+## Mando una foto y el bot dice que no puede verla
+El bot lee las fotos con permiso solo sobre `/data/telegram/inbox`. Revisá que `config/managed-settings.json` tenga
+`Read(//data/telegram/inbox/**)` en `allow` y que **no** tenga `"Read"` a secas en `deny` (una regla deny a secas gana sobre
+cualquier allow). Después de cambiarlo: `docker compose up -d --build --force-recreate`.
+
 ## No llegan los mensajes automáticos
 - `docker compose ps`: `asistente-tareas` tiene que estar `healthy`. `scripts/logs.sh tareas` muestra las tareas
   registradas al arrancar y cada ejecución.

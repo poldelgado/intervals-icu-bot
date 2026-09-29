@@ -22,7 +22,7 @@ mcp = MCPServer(
 )
 
 Tipo = Literal["perfil", "diario"]
-Categoria = Literal["objetivos", "salud", "preferencias", "equipo", "referencias"]
+Categoria = Literal["objetivos", "salud", "nutricion", "preferencias", "equipo", "referencias"]
 
 
 def _err(e: MemoriaError) -> str:
@@ -35,9 +35,11 @@ def memoria_guardar(
 ) -> str:
     """Guarda una entrada.
 
-    tipo="perfil": dato estable (objetivos, salud/lesiones, preferencias, equipo, referencias
-    como FTP o FC máxima que la persona te dijo); requiere categoria.
-    tipo="diario": hecho o decisión fechada ("molestia en la rodilla, bajé la carga").
+    tipo="perfil": dato estable (objetivos, salud/lesiones, nutricion (objetivo de peso,
+    alergias, restricciones, preferencias de comida, altura/edad), preferencias, equipo,
+    referencias como FC máxima que la persona te dijo); requiere categoria.
+    tipo="diario": hecho o decisión fechada ("molestia en la rodilla, bajé la carga") o una
+    comida confirmada ("Almuerzo ~650 kcal (P 40 / C 70 / G 22 g): milanesa con puré").
     fecha: YYYY-MM-DD, por defecto hoy. Máximo 400 caracteres, una línea.
     """
     try:

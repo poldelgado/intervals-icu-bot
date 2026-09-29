@@ -15,6 +15,9 @@ if [ -n "${HEALTHCHECK_URL:-}" ]; then
     || die "HEALTHCHECK_URL inválida (esperaba https://..., ej. https://hc-ping.com/<uuid>)"
   log "Alarma externa activada (ping cada ${HEARTBEAT_EVERY:-300}s mientras el bot esté sano)."
 fi
+INBOX_RETENTION_DAYS="${INBOX_RETENTION_DAYS:-7}"
+validate_int INBOX_RETENTION_DAYS 1 365
+export INBOX_RETENTION_DAYS
 [[ "${HEARTBEAT_EVERY:-300}" =~ ^[0-9]+$ ]] && [ "${HEARTBEAT_EVERY:-300}" -ge 60 ] \
   || die "HEARTBEAT_EVERY debe ser un entero >= 60"
 

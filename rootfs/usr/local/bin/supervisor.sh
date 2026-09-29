@@ -21,6 +21,7 @@ notify_model=""
 poller_missing_since=0
 POLLER_GRACE=180     # s tras iniciar la sesión antes de exigir el poller
 POLLER_MISSING_MAX=60 # s sin poller antes de reiniciar la sesión
+INBOX_RETENTION_DAYS="${INBOX_RETENTION_DAYS:-7}"
 HEARTBEAT_EVERY="${HEARTBEAT_EVERY:-300}"   # s entre pings a HEALTHCHECK_URL
 last_heartbeat=0
 last_auth_notice=0
@@ -64,7 +65,17 @@ ensure_plugin() {
   (cd "${dir}" && bun install --no-summary) >>/tmp/plugin-install.log 2>&1
 }
 
+# Las fotos que mandás por Telegram quedan en el inbox del plugin: se borran a los
+# INBOX_RETENTION_DAYS días (privacidad y espacio). Corre en cada inicio de sesión (≥ 1 vez/día).
+clean_inbox() {
+  local inbox="${TELEGRAM_STATE_DIR}/inbox" n
+  [ -d "${inbox}" ] || return 0
+  n="$(find "${inbox}" -type f -mtime +"$((INBOX_RETENTION_DAYS - 1))" -print -delete 2>/dev/null | wc -l)"
+  [ "${n}" -eq 0 ] || log "Borré ${n} archivo(s) del inbox con más de ${INBOX_RETENTION_DAYS} días."
+}
+
 start_session() {
+  clean_inbox
   # Perfil de memoria actualizado en cada (re)inicio, incluido el diario.
   /usr/local/bin/render-memoria.sh || log "No pude inyectar la memoria; sigo sin ella." >&2
   : > "${SESSION_LOG}"

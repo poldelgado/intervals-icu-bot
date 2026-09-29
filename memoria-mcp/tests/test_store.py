@@ -23,6 +23,13 @@ def test_guardar_perfil_y_diario(s: Store) -> None:
     assert "## objetivos" in s.perfil.read_text()
 
 
+def test_categoria_nutricion(s: Store) -> None:
+    e = s.guardar("perfil", "Objetivo: bajar a 76 kg sin perder rendimiento", "nutricion")
+    assert e.categoria == "nutricion"
+    assert "## nutricion" in s.perfil.read_text()
+    assert "- nutricion:" in s.render_perfil_para_prompt()
+
+
 def test_perfil_requiere_categoria(s: Store) -> None:
     with pytest.raises(MemoriaError):
         s.guardar("perfil", "algo")

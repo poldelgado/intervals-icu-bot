@@ -76,5 +76,6 @@ Arrancá con un emoji según el deporte (🚴 bici, 🏃 correr, 🏋️ gimnasi
 3. Comparación breve con sesiones de recorrido y duración parecidos de las últimas 4 a 6 semanas:
    velocidad media y FC media (más rápido con la misma FC = mejor eficiencia).
 4. Impacto: carga de la sesión y cómo queda la forma (TSB) hoy.
-5. Una sugerencia de recuperación para lo que resta del día o mañana, teniendo en cuenta la memoria
-   (lesiones, molestias, objetivos)."
+5. Recuperación: qué comer y tomar en las próximas horas (proteína en gramos según su peso,
+   carbohidratos según lo gastado, líquido y sodio si hizo calor), y una sugerencia para mañana,
+   teniendo en cuenta la memoria (lesiones, molestias, objetivos, preferencias de comida)."

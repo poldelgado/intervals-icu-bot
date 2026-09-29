@@ -22,7 +22,7 @@ from dataclasses import dataclass
 from datetime import date, datetime
 from pathlib import Path
 
-CATEGORIAS = ("objetivos", "salud", "preferencias", "equipo", "referencias")
+CATEGORIAS = ("objetivos", "salud", "nutricion", "preferencias", "equipo", "referencias")
 TIPOS = ("perfil", "diario")
 
 MAX_TEXTO = 400

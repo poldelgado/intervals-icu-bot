@@ -23,6 +23,23 @@ Amazfit ──► Zepp ────────────────┘      
   Bash, Read, Write, Edit, WebFetch y WebSearch también están denegados.
 - Memoria persistente mediante un MCP propio con 5 tools acotadas (ver [Memoria](#memoria)).
 
+## Nutrición y fotos de comida
+
+Además de entrenador, el bot es experto en nutrición deportiva: cuánto comer según la carga del día, qué comer y tomar
+antes, durante y después de entrenar (carbohidratos por hora, hidratación y sodio con calor), y consultas generales, con
+comida argentina y sin dietas de moda. El resumen matinal y el análisis post-actividad incluyen una línea de nutrición.
+
+- **Fotos:** mandale la foto de un plato o de una etiqueta nutricional (con una leyenda opcional, ej. "media porción").
+  Responde qué ve, un **rango** de calorías, macros aproximados y lo que no se ve en la foto (aceite, salsas).
+  Es una estimación: por foto el error típico es ±20–30 %.
+- **Registro:** después pregunta "¿Lo anoto?"; si decís que sí, queda en el diario de la memoria. "¿Cuánto comí hoy?"
+  suma lo anotado y lo compara con tu gasto estimado.
+- **Perfil:** contale tu objetivo (rendimiento, peso), altura, edad, alergias y preferencias: lo guarda en la categoría
+  `nutricion` de la memoria.
+- **Límites:** no es un nutricionista clínico ni reemplaza a uno; no arma dietas para enfermedades.
+- **Permisos:** el bot solo puede leer la carpeta donde llegan tus fotos (`/data/telegram/inbox`); el resto del sistema
+  de archivos sigue bloqueado. Las fotos se borran a los `INBOX_RETENTION_DAYS` días (7 por defecto).
+
 ## Mensajes automáticos (servicio `tareas`)
 
 Un segundo contenedor (`tareas`, misma imagen, sin socket de Docker) corre [supercronic](https://github.com/aptible/supercronic)
@@ -175,7 +192,8 @@ Para desactivarla: `MEMORIA_ENABLED=false` y `docker compose up -d`.
 
 Tus datos de entrenamiento y salud pasan por: **Intervals.icu** (fuente), **Telegram** (tus mensajes y las respuestas)
 y **Anthropic** (Claude procesa lo que consulta y lo que escribís). La memoria guarda datos personales y de salud en
-el volumen `memoria` del host; incluilo en tus respaldos y protegelo como tal. Revisá sus políticas. El repo y la imagen no contienen
+el volumen `memoria` del host; incluilo en tus respaldos y protegelo como tal. Las fotos que mandás se envían a Anthropic
+para analizarlas y quedan en el volumen `telegram` hasta que se borran (`INBOX_RETENTION_DAYS`). Revisá sus políticas. El repo y la imagen no contienen
 secretos; las variables de `.env` son visibles con `docker inspect` para quien tenga acceso al daemon.
 Claude Code envía telemetría de uso según su configuración por defecto.
 

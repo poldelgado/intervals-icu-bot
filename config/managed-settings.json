@@ -47,7 +47,9 @@
       "mcp__memoria__memoria_borrar",
       "mcp__control__modelo_actual",
       "mcp__control__modelo_cambiar",
-      "mcp__control__reportes_recientes"
+      "mcp__control__reportes_recientes",
+      "mcp__plugin_telegram_telegram__download_attachment",
+      "Read(//data/telegram/inbox/**)"
     ],
     "deny": [
       "mcp__intervals__icu_update_activity",
@@ -83,18 +85,31 @@
       "mcp__intervals__icu_download_activity_file",
       "mcp__intervals__icu_download_fit_file",
       "mcp__intervals__icu_download_gpx_file",
-      "mcp__plugin_telegram_telegram__download_attachment",
       "Bash",
       "Write",
       "Edit",
       "NotebookEdit",
       "WebFetch",
       "WebSearch",
-      "Read",
       "Glob",
       "Grep",
       "Agent",
-      "Task"
+      "Task",
+      "Read(//data/claude/**)",
+      "Read(//data/memoria/**)",
+      "Read(//data/estado/**)",
+      "Read(//data/tareas/**)",
+      "Read(//data/telegram/.env)",
+      "Read(//data/telegram/*.json)",
+      "Read(//data/telegram/approved/**)",
+      "Read(//proc/**)",
+      "Read(//sys/**)",
+      "Read(//etc/**)",
+      "Read(//home/**)",
+      "Read(//tmp/**)",
+      "Read(//opt/**)",
+      "Read(//root/**)",
+      "Read(//run/**)"
     ]
   },
   "enabledMcpjsonServers": [
